@@ -1,9 +1,11 @@
 import nodemailer from "nodemailer";
 import { Student } from "../model/student";
-import { ApiError } from "../utils/ApiError";
 import member from "../model/member";
 import team from "../model/team";
-
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { Student } from "../models/studentModel.js";
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -67,28 +69,28 @@ export const verifyOTP = async (req, res) => {
     // Success → clear OTP
       req.session.otp = null;
       
-      let user = await member.findOne({ email: req.session.email });
-      const student = await student.findOne({ email: req.session.email });
+    //   let user = await member.findOne({ email: req.session.email });
+    //   const student = await Student.findOne({ email: req.session.email });
 
-    if (!user) {
+    // if (!user) {
 
-      user = await member.create({
-        name: Student.name,
-        email: req.session.email,
-      });
-      }
-    else {
-        return res.status(400).json({
-            message: "Member already registered",
-            success:false
-        })
-      }
+    //   user = await member.create({
+    //     name: student.name,
+    //     email: req.session.email,
+    //   });
+    //   }
+    // else {
+    //     return res.status(400).json({
+    //         message: "Member already registered",
+    //         success:false
+    //     })
+    //   }
       
-      const teamData = await team.create({
-          teamLeader: Student.name
-      })
-      
-      
+    //   const teamData = await team.create({
+    //       teamLeader: student.name,
+    //       teamLeaderMail:req.session.email
+    //   })
+
     res.status(200).json({
       message: "Login successful",
         email: req.session.email,
@@ -100,3 +102,69 @@ export const verifyOTP = async (req, res) => {
   }
 };
 
+
+
+
+const createTeam = asyncHandler(async (req,res)=>{
+
+const leaderEmail = req.user.email;   // leader from login
+const { teamName, memberEmail } = req.body;
+
+if(!teamName || !memberEmail){
+throw new ApiError(400,"Team name and member required");
+}
+
+// leader cannot select himself
+if(String(leaderEmail) === String(memberEmail)){
+throw new ApiError(400,"Leader and member must be different");
+}
+
+// check member exists
+const member = await Student.findById(memberEmail);
+
+if(!member){
+throw new ApiError(404,"Member not found");
+}
+
+// check if leader already in team
+const leaderTeam = await team.findOne({
+$or:[
+{teamLeader:leaderEmail},
+{teamMembers:leaderEmail}
+]
+});
+
+if(leaderTeam){
+throw new ApiError(400,"Leader already has a team");
+}
+
+// check if member already in team
+const memberTeam = await team.findOne({
+$or:[
+{teamLeader:memberEmail},
+{teamMembers:memberEmail}
+]
+});
+
+if(memberTeam){
+throw new ApiError(400,"Member already in a team");
+}
+
+// create team
+const team = await team.create({
+
+teamName,
+
+teamLeader:req.user.name,
+
+teamMembers:[leaderEmail,memberEmail]
+
+});
+
+return res.status(201).json(
+new ApiResponse(201,team,"Team created successfully")
+);
+
+});
+
+export { createTeam };
