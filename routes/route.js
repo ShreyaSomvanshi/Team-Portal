@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { gradeTeam,getAllTeams,getTeamDetails } from "../controller/Admin.controller.js";
 
-const router=Router();
+const adminRouter=Router();
 //routes
-router.route("/grade/:teamId").post(gradeTeam)
-router.route("/getAllTeams").get(getAllTeams)
-router.route("/teamDetails/:teamId").post(getTeamDetails)
+adminRouter.route("/grade/:teamId").post(gradeTeam)
+adminRouter.route("/getAllTeams").get(getAllTeams)
+adminRouter.route("/teamDetails/:teamId").post(getTeamDetails)
 
 export default adminRouter

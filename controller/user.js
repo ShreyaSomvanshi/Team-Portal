@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { Student } from "../model/student.js";
-import member from "../model/member.js";
-import team from "../model/team.js";
+import {member} from "../model/member.js";
+import {team} from "../model/team.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
