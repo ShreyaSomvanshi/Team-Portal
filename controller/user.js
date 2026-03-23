@@ -1,11 +1,11 @@
 import nodemailer from "nodemailer";
-import { Student } from "../model/student";
-import member from "../model/member";
-import team from "../model/team";
+import { Student } from "../model/student.js";
+import member from "../model/member.js";
+import team from "../model/team.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Student } from "../models/studentModel.js";
+
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -167,4 +167,4 @@ new ApiResponse(201,team,"Team created successfully")
 
 });
 
-export { createTeam ,sendOTP,verifyOTP};
+export { createTeam };

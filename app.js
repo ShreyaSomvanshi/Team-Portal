@@ -2,8 +2,6 @@ import express from "express";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import { slow } from "./middleware/express-slowDown.js";
-import { limiter } from "./middleware/rateLimiter.js";
 import helmet from "helmet"
 import cors from 'cors'
 dotenv.config(); 
@@ -44,7 +42,7 @@ app.use((req, res, next) => {
 });
 
 import userRouter from "./routes/userRoutes.js";
-import adminRouter from "./routes/routes.js"
+import adminRouter from "./routes/route.js"
 
 app.use("/api/v1/student", userRouter);
 app.use("/api/v1/admin", adminRouter);

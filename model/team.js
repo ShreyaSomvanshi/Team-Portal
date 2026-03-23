@@ -20,7 +20,7 @@ const teamSchema = new mongoose.Schema({
         lowercase: true,
         trim: true
     },
-    
+
     members: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "memberSchema",
@@ -38,4 +38,4 @@ const teamSchema = new mongoose.Schema({
   timestamps: true
 });
 
-export default mongoose.model("Team", teamSchema);
+export const team =  mongoose.model("team", teamSchema);

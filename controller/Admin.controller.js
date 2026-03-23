@@ -1,11 +1,11 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Team } from "../models/team.model.js";
+import { team } from "../model/team.js";
 
 const getAllTeams = asyncHandler(async (req,res)=>{
 
-const teams = await Team.find()
+const teams = await team.find()
 .populate("members","name")
 .select("teamName members dataset scores");
 
@@ -33,7 +33,7 @@ new ApiResponse(200,formattedTeams,"Teams fetched successfully")
 const getTeamDetails = asyncHandler(async (req, res) => {
   const { teamId } = req.params;
 
-  const team = await Team.findById(teamId);
+  const team = await team.findById(teamId);
 
   if (!team) {
     throw new ApiError(404, "Team not found");
@@ -72,7 +72,7 @@ const gradeTeam = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All scores must be between 0 and 10");
   }
 
-  const team = await Team.findById(teamId);
+  const team = await team.findById(teamId);
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
