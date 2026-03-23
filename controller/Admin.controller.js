@@ -115,4 +115,4 @@ const gradeTeam = asyncHandler(async (req, res) => {
     );
 });
 
-export { getAllTeams, gradeTeam };
+export { getAllTeams, gradeTeam, getTeamDetails };
