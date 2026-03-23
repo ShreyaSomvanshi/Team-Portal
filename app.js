@@ -43,7 +43,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// import userRouter from "./routes/Route.js";
+import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/routes.js"
 
 app.use("/api/v1/student", userRouter);

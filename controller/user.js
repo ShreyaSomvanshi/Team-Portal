@@ -167,4 +167,4 @@ new ApiResponse(201,team,"Team created successfully")
 
 });
 
-export { createTeam };
+export { createTeam ,sendOTP,verifyOTP};
