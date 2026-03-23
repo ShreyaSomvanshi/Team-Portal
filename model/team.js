@@ -13,15 +13,23 @@ const teamSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: "memberSchema",
       required: true
-  },
-  members: {
+    },
+    teamLeaderMail: {
+        type: String,
+        required: true,
+        lowercase: true,
+        trim: true
+    },
+    
+    members: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "memberSchema",
       required: true
-    },
+    }],
+
     dataSet: {
         type: String,
-        required:true
+        required: true,
   }
 
     
