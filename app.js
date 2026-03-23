@@ -43,9 +43,11 @@ app.use((req, res, next) => {
     next();
 });
 
-import userRegister from "./routes/route.js";
+// import userRouter from "./routes/Route.js";
+import adminRouter from "./routes/routes.js"
 
-app.use("/api/v1/student", userRegister);
+app.use("/api/v1/student", userRouter);
+app.use("/api/v1/admin", adminRouter);
 
 
 
