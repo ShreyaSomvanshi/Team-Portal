@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { team } from "../model/team.js";
+import { Team } from "../model/team.js";
 
 const getAllTeams = asyncHandler(async (req,res)=>{
 

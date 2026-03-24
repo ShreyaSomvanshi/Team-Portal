@@ -23,7 +23,7 @@ const teamSchema = new mongoose.Schema({
 
     members: [{
       type: mongoose.Schema.Types.ObjectId,
-      ref: "memberSchema",
+      ref: "Student",
       required: true
     }],
 
@@ -38,4 +38,4 @@ const teamSchema = new mongoose.Schema({
   timestamps: true
 });
 
-export const team =  mongoose.model("team", teamSchema);
+export const Team =  mongoose.model("Team", teamSchema);
