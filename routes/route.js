@@ -3,7 +3,7 @@ import { gradeTeam,getAllTeams,getTeamDetails } from "../controller/Admin.contro
 
 const adminRouter=Router();
 //routes
-adminRouter.route("/grade/:teamId").post(gradeTeam)
+adminRouter.route("/grade/:teamId").post(gradeTeam);
 adminRouter.route("/getAllTeams").get(getAllTeams)
 adminRouter.route("/teamDetails/:teamId").post(getTeamDetails)
 

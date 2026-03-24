@@ -29,7 +29,8 @@ app.use(
         cookie: {
             secure: false,
             httpOnly: true,
-            maxAge: 5 * 60 *60* 1000, // 5 minutes
+            sameSite: "lax",
+            maxAge: 5 * 60 *60* 1000*10*24, // 5 minutes
         },
     })
 );
@@ -46,7 +47,5 @@ import adminRouter from "./routes/route.js"
 
 app.use("/api/v1/student", userRouter);
 app.use("/api/v1/admin", adminRouter);
-
-
 
 export { app };

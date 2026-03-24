@@ -1,118 +1,120 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Team } from "../model/team.js";
+export const getAllTeams = asyncHandler(async (req, res) => {
+  const teams = await Team.find()
+    .populate("members", "name")
+    .select("teamName members dataSet scores");
 
-const getAllTeams = asyncHandler(async (req,res)=>{
-
-const teams = await team.find()
-.populate("members","name")
-.select("teamName members dataset scores");
-
-const formattedTeams = teams.map(team => ({
-teamName: team.teamName,
-
-members: team.members.map(member => member.name),
-
-dataset: team.dataset,
-
-scores:{
-round1: team.scores.round1,
-round2: team.scores.round2,
-round3: team.scores.round3
-}
-
-}));
-
-return res.status(200).json(
-new ApiResponse(200,formattedTeams,"Teams fetched successfully")
-);
-
+  const formattedTeams = teams.map(team => ({
+    teamName: team.teamName,
+    members: team.members.map(m => m.name),
+    dataSet: team.dataSet,
+    scores: team.scores || []
+  }));
+  return res.status(200).json(
+    new ApiResponse(200, formattedTeams, "Teams fetched successfully")
+  );
 });
 
-const getTeamDetails = asyncHandler(async (req, res) => {
-  const { teamId } = req.params;
 
-  const team = await team.findById(teamId);
+export const getTeamDetails = asyncHandler(async (req, res) => {
+  let { teamId } = req.params;
+  teamId = teamId.trim();
+  const team = await Team.findById(teamId)
+    .populate("members", "name email");
 
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { team }, "Team details fetched successfully"));
+  return res.status(200).json(
+    new ApiResponse(200, team, "Team details fetched successfully")
+  );
 });
 
-const gradeTeam = asyncHandler(async (req, res) => {
-  const { teamId } = req.params;
 
-  const { 
-    round, 
-    understanding, 
-    reasoning, 
-    presentation, 
-    clarity, 
-    execution 
-  } = req.body;
+export const gradeTeam = asyncHandler(async (req, res) => {
+  let { teamId } = req.params;
+  teamId = teamId.trim();
 
+  // ✅ ObjectId validation
+  if (!mongoose.Types.ObjectId.isValid(teamId)) {
+    throw new ApiError(400, "Invalid Team ID");
+  }
+
+  const { round, understanding, approach, result, presentation } = req.body;
+
+  // ✅ round validation
   if (![1, 2, 3].includes(Number(round))) {
-    throw new ApiError(400, "Invalid round. Round must be 1, 2, or 3.");
+    throw new ApiError(400, "Invalid round (1,2,3 allowed)");
   }
 
-  if ([understanding, reasoning, presentation, clarity, execution].some(
-      (param) => param === undefined || param === null
-    )
+  // ✅ required fields
+  if ([understanding, approach, result, presentation].some(v => v === undefined)) {
+    throw new ApiError(400, "All parameters required");
+  }
+
+  // ✅ range validation
+  if (
+    understanding < 0 || understanding > 40 ||
+    approach < 0 || approach > 30 ||
+    result < 0 || result > 20 ||
+    presentation < 0 || presentation > 10
   ) {
-    throw new ApiError(400, "All 5 grading parameters are required");
+    throw new ApiError(400, "Scores exceed allowed limits");
   }
 
-  const scoreValues =[understanding, reasoning, presentation, clarity, execution];
-  if (scoreValues.some((score) => score < 0 || score > 10)) {
-    throw new ApiError(400, "All scores must be between 0 and 10");
-  }
+  const team = await Team.findById(teamId);
 
-  const team = await team.findById(teamId);
   if (!team) {
     throw new ApiError(404, "Team not found");
   }
 
-  const totalScore = understanding + reasoning + presentation + clarity + execution;
+  // ✅ total score
+  const totalScore = understanding + approach + result + presentation;
 
-  const existingScoreIndex = team.scores.findIndex(
-    (score) => score.round === Number(round)
+  // ensure array exists
+  if (!team.scores) team.scores = [];
+
+  // 🔥 CLEAN OLD INVALID DATA (VERY IMPORTANT)
+  team.scores = team.scores.filter(s =>
+    s.round !== undefined &&
+    s.understanding !== undefined &&
+    s.approach !== undefined &&
+    s.result !== undefined &&
+    s.presentation !== undefined
   );
 
-  if (existingScoreIndex !== -1) {
-    team.scores[existingScoreIndex].understanding = understanding;
-    team.scores[existingScoreIndex].reasoning = reasoning;
-    team.scores[existingScoreIndex].presentation = presentation;
-    team.scores[existingScoreIndex].clarity = clarity;
-    team.scores[existingScoreIndex].execution = execution;
-    team.scores[existingScoreIndex].totalScore = totalScore;
-  } else {
-    team.scores.push({
-      round: Number(round),
-      understanding,
-      reasoning,
-      presentation,
-      clarity,
-      execution,
-      totalScore
-    });
-  }
+  // 🔥 NEW SCORE OBJECT
+  const newScore = {
+    round: Number(round),
+    understanding,
+    approach,
+    result,
+    presentation,
+    totalScore
+  };
+
+  // 🔥 CREATE + UPDATE LOGIC (SAME API)
+  team.scores = team.scores.filter(
+    s => s.round !== Number(round)
+  );
+
+  team.scores.push(newScore);
+
+  // optional sorting
+  team.scores.sort((a, b) => a.round - b.round);
 
   await team.save();
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200, 
-        { scores: team.scores }, 
-        `Team successfully graded for Round ${round}`
-      )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      team.scores,
+      `Round ${round} graded successfully (created/updated)`
+    )
+  );
 });
-
-export { getAllTeams, gradeTeam, getTeamDetails };

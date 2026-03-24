@@ -10,7 +10,7 @@ const teamSchema = new mongoose.Schema({
     required: true
     },
     teamLeader: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "memberSchema",
       required: true
     },
@@ -30,11 +30,21 @@ const teamSchema = new mongoose.Schema({
     dataSet: {
         type: String,
         required: true,
-  }
+  },
+    scores: [
+  {
+    round: { type: Number, enum: [1, 2, 3], required: true },
 
-    
-    
-}, {
+    understanding: { type: Number, required: true }, // out of 40
+    approach: { type: Number, required: true },      // out of 30
+    result: { type: Number, required: true },        // out of 20
+    presentation: { type: Number, required: true },  // out of 10
+
+    totalScore: { type: Number }
+  }
+]
+},
+ {
   timestamps: true
 });
 

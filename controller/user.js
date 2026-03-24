@@ -10,13 +10,15 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+    // console.log("EMAIL_USER:", process.env.EMAIL_USER);
+    // console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: "shreyamisthi@gmail.com",
+    pass: "ggvaycsuensqnlcn"
   }
 });
 
@@ -60,7 +62,7 @@ export const sendOTP = async (req, res) => {
   }
 };
 
-export const verifyOTP = async (req, res) => {
+  export const verifyOTP = async (req, res) => {
   try {
     const { otp } = req.body;
 
@@ -72,90 +74,97 @@ export const verifyOTP = async (req, res) => {
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    // Success → clear OTP
+    // OTP clear
     req.session.otp = null;
 
-    //   let user = await Member.findOne({ email: req.session.email });
-    //   const student = await Student.findOne({ email: req.session.email });
+    // User fetch
+    const user = await Student.findOne({ email: req.session.email });
 
-    // if (!user) {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    //   user = await Member.create({
-    //     name: student.name,
-    //     email: req.session.email,
-    //   });
-    //   }
-    // else {
-    //     return res.status(400).json({
-    //         message: "Member already registered",
-    //         success:false
-    //     })
-    //   }
-
-    //   const teamData = await team.create({
-    //       teamLeader: student.name,
-    //       teamLeaderMail:req.session.email
-    //   })
+    // Session me store
+    req.session.userId = user._id;
 
     res.status(200).json({
       message: "Login successful",
-      email: req.session.email,
+      user,
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-};
+  };
+ export const createTeam = asyncHandler(async (req, res) => {
+  try {
+    const leaderEmail = req.user.email;
+    const leaderName = req.user.name;
+    const leaderId = req.user._id;
 
-const createTeam = asyncHandler(async (req, res) => {
-  const leaderEmail = req.user.email; // leader from login
-  const { teamName, memberEmail } = req.body;
+    const { teamName, memberEmail } = req.body;
 
-  if (!teamName || !memberEmail) {
-    throw new ApiError(400, "Team name and member required");
+    if (!teamName || !memberEmail) {
+      throw new ApiError(400, "Team name and member required");
+    }
+
+    // leader cannot select himself
+    if (leaderEmail === memberEmail) {
+      throw new ApiError(400, "Leader and member must be different");
+    }
+
+    // check member exists
+    const member = await Student.findOne({ email: memberEmail });
+
+    if (!member) {
+      throw new ApiError(404, "Member not found");
+    }
+
+    //  check if leader already in team
+    const leaderTeam = await Team.findOne({
+      $or: [
+        { teamLeaderMail: leaderEmail }, // leader by email
+        { members: leaderId }            // leader in members array
+      ],
+    });
+
+    if (leaderTeam) {
+      throw new ApiError(400, "Leader already has a team");
+    }
+
+    // 🔥 check if member already in team
+    const memberTeam = await Team.findOne({
+      $or: [
+        { teamLeaderMail: memberEmail },
+        { members: member._id }
+      ],
+    });
+
+    if (memberTeam) {
+      throw new ApiError(400, "Member already in a team");
+    }
+
+    // 🔥 create team
+    const team = await Team.create({
+      teamName,
+      teamYear: new Date().getFullYear(), // required field fix
+      teamLeader: leaderName,
+      teamLeaderMail: leaderEmail,
+      members: [leaderId, member._id],
+      dataSet: "default", // required field fix (change if needed)
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Team created successfully",
+      team,
+    });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Failed to create team",
+      success: false,
+    });
   }
-
-  // leader cannot select himself
-  if (String(leaderEmail) === String(memberEmail)) {
-    throw new ApiError(400, "Leader and member must be different");
-  }
-
-  // check member exists
-  const member = await Student.findById(memberEmail);
-
-  if (!member) {
-    throw new ApiError(404, "Member not found");
-  }
-
-  // check if leader already in team
-  const leaderTeam = await Team.findOne({
-    $or: [{ teamLeader: leaderEmail }, { teamMembers: leaderEmail }],
-  });
-
-  if (leaderTeam) {
-    throw new ApiError(400, "Leader already has a team");
-  }
-
-  // check if member already in team
-  const memberTeam = await Team.findOne({
-    $or: [{ teamLeader: memberEmail }, { teamMembers: memberEmail }],
-  });
-
-  if (memberTeam) {
-    throw new ApiError(400, "Member already in a team");
-  }
-
-  // create team
-  const team = await Team.create({
-    teamName,
-
-    teamLeader: req.user.name,
-
-    teamMembers: [leaderEmail, memberEmail],
-  });
-
-  return res
-    .status(201)
-    .json(new ApiResponse(201, team, "Team created successfully"));
 });
-
-export { createTeam };
