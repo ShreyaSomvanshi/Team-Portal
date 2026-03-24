@@ -32,6 +32,12 @@ export const sendOTP = async (req, res) => {
     if (!userExist) {
       throw new ApiError(400, "Entered email is not registered in the event");
     }
+    const existedLeader = await Team.findOne({ teamLeaderMail: email });
+    if (existedLeader) {
+      return res.status(500).json({
+        message:"Leader has already registered"
+      })
+    }
 
     const otp = generateOTP();
 
