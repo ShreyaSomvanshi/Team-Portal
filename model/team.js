@@ -1,51 +1,43 @@
 import mongoose from "mongoose";
-const teamSchema = new mongoose.Schema({
-  teamName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  teamYear: {
-    type: Number,
-    required: true
-    },
-    teamLeader: {
+
+const teamSchema = new mongoose.Schema(
+  {
+    teamName: {
       type: String,
-      ref: "memberSchema",
-      required: true
-    },
-    teamLeaderMail: {
-        type: String,
-        required: true,
-        lowercase: true,
-        trim: true
+      required: true,
+      trim: true,
+      unique: true, // optional but recommended
     },
 
-    members: [{
+    teamYear: {
+      type: Number,
+      enum: [1, 2],
+      required: true,
+    },
+
+    teamLeader: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
-      required: true
-    }],
+      required: true,
+    },
 
-    dataSet: {
-        type: String,
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Student",
         required: true,
+      },
+    ],
+
+    dataset: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Dataset",
+      default: null, // required hata diya (team create ke time dataset na ho sakta)
+    },
   },
-    scores: [
   {
-    round: { type: Number, enum: [1, 2, 3], required: true },
-
-    understanding: { type: Number, required: true }, // out of 40
-    approach: { type: Number, required: true },      // out of 30
-    result: { type: Number, required: true },        // out of 20
-    presentation: { type: Number, required: true },  // out of 10
-
-    totalScore: { type: Number }
+    timestamps: true,
   }
-]
-},
- {
-  timestamps: true
-});
+);
 
-export const Team =  mongoose.model("Team", teamSchema);
+export const Team = mongoose.model("Team", teamSchema);

@@ -30,7 +30,7 @@ app.use(
             secure: false,
             httpOnly: true,
             sameSite: "lax",
-            maxAge: 5 * 60 *60* 1000*10*24, // 5 minutes
+            maxAge: 5 * 60 * 60 * 1000*100, // 5 minutes
         },
     })
 );
