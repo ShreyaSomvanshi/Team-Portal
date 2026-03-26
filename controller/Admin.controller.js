@@ -18,6 +18,7 @@ export const getAllTeams = asyncHandler(async (req, res) => {
       const scores = await Score.find({ team: team._id });
 
       return {
+        _id: team._id,
         teamName: team.teamName,
         members: team.members.map((m) => m.name),
         dataset: team.dataset,
