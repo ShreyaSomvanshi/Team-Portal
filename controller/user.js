@@ -7,99 +7,144 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Dataset } from "../model/dataset.js";
 
 
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+// const generateOTP = () => {
+//   return Math.floor(100000 + Math.random() * 900000).toString();
+// };
 
-// ✅ use ENV (IMPORTANT)
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-
+// // ✅ use ENV (IMPORTANT)
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.gmail.com",
+//   port: 587,
+//   secure: false,
+//   auth: {
+//     user: process.env.EMAIL_USER,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
 
 
-// ================= SEND OTP =================
-export const sendOTP = asyncHandler(async (req, res) => {
+
+
+// // ================= SEND OTP =================
+// export const sendOTP = asyncHandler(async (req, res) => {
+//   const { email } = req.body;
+
+//   if (!email) {
+//     throw new ApiError(400, "Email is required");
+//   }
+
+//   const user = await Student.findOne({ email });
+
+//   if (!user) {
+//     throw new ApiError(400, "Entered email is not registered");
+//   }
+
+//   const existedLeader = await Team.findOne({ _id: user._id });
+
+//   if (existedLeader) {
+//     throw new ApiError(400, "Leader has already registered");
+//   }
+
+//   const otp = generateOTP();
+
+//   // store session
+//   req.session.otp = otp;
+//   req.session.user = user;
+
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_USER,
+//     to: email,
+//     subject: "Your Login OTP",
+//     text: `Your OTP is ${otp}`,
+//   });
+//   console.log(req.session);
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, null, "OTP sent successfully"));
+// });
+
+
+// export const verifyOTP = async (req, res) => {
+//   try {
+//     const { otp } = req.body;
+
+//     if (!req.session.otp) {
+//       return res.status(400).json({ message: "Session expired" });
+//     }
+
+//     if (req.session.otp !== otp) {
+//       return res.status(400).json({ message: "Invalid OTP" });
+//     }
+
+//     // OTP clear
+//     req.session.otp = null;
+
+//     // User fetch
+//     const user = await Student.findById(req.session.user._id);
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Session me store
+//     req.user = user;
+
+//     res.status(200).json({
+//       message: "Login successful",
+//       user,
+//     });
+
+//   } catch (err) {
+//     console.log(err)
+//     res.status(500).json({ error: err.message });
+//   }
+//   };
+
+
+export const verifyLeader = asyncHandler(async (req, res) => {
+
   const { email } = req.body;
 
   if (!email) {
     throw new ApiError(400, "Email is required");
   }
 
-  const user = await Student.findOne({ email });
+  // check student exists
+  const student = await Student.findOne({ email });
 
-  if (!user) {
-    throw new ApiError(400, "Entered email is not registered");
+  if (!student) {
+    throw new ApiError(404, "Student not registered for the event");
   }
 
-  const existedLeader = await Team.findOne({ _id: user._id });
-
-  if (existedLeader) {
-    throw new ApiError(400, "Leader has already registered");
-  }
-
-  const otp = generateOTP();
-
-  // store session
-  req.session.otp = otp;
-  req.session.user = user;
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: "Your Login OTP",
-    text: `Your OTP is ${otp}`,
+  // check if already in team
+  const existingTeam = await Team.findOne({
+    members: student._id
   });
-  console.log(req.session);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, "OTP sent successfully"));
-});
-
-
-export const verifyOTP = async (req, res) => {
-  try {
-    const { otp } = req.body;
-
-    if (!req.session.otp) {
-      return res.status(400).json({ message: "Session expired" });
-    }
-
-    if (req.session.otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    // OTP clear
-    req.session.otp = null;
-
-    // User fetch
-    const user = await Student.findById(req.session.user._id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Session me store
-    req.user = user;
-
-    res.status(200).json({
-      message: "Login successful",
-      user,
-    });
-
-  } catch (err) {
-    console.log(err)
-    res.status(500).json({ error: err.message });
+  if (existingTeam) {
+    throw new ApiError(400, "Leader already registered in a team");
   }
-  };
+
+  // store leader in session
+  req.session.user = student;
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        leader: {
+          id: student._id,
+          name: student.name,
+          email: student.email,
+          year: student.year
+        }
+      },
+      "Leader verified successfully"
+    )
+  );
+
+});
 
 
 export const createTeam = asyncHandler(async (req, res) => {
